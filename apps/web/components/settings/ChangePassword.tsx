@@ -23,9 +23,12 @@ import { zChangePasswordSchema } from "@karakeep/shared/types/users";
 
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Alert, AlertTitle } from "../ui/alert";
+import { useClientConfig } from "@/lib/clientConfig";
 
 export function ChangePassword() {
   const { t } = useTranslation();
+  const clientConfig = useClientConfig();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -71,7 +74,15 @@ export function ChangePassword() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Form {...form}>
+        {clientConfig.auth.disablePasswordAuth ? (
+          <Alert>
+            <Lock className="h-4 w-4" />
+            <AlertTitle>
+              Password authentication is currently disabled.
+            </AlertTitle>
+          </Alert>
+        ) : (
+          <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
@@ -206,6 +217,7 @@ export function ChangePassword() {
             </div>
           </form>
         </Form>
+        )}
       </CardContent>
     </Card>
   );
