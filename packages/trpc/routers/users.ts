@@ -297,11 +297,22 @@ export const usersAppRouter = router({
       }
       const userDb = await ctx.db.query.users.findFirst({
         where: and(eq(users.id, ctx.user.id), eq(users.email, ctx.user.email)),
+        columns: {
+          id: true,
+          name: true,
+          email: true,
+          password: true,
+        },
       });
       if (!userDb) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
-      return { id: ctx.user.id, name: ctx.user.name, email: ctx.user.email };
+      return { 
+        id: ctx.user.id, 
+        name: ctx.user.name, 
+        email: ctx.user.email,
+        localUser: userDb.password !== null,
+      };
     }),
   stats: authedProcedure
     .output(zUserStatsResponseSchema)

@@ -16,11 +16,12 @@ import { toast } from "@/components/ui/use-toast";
 import { useTranslation } from "@/lib/i18n/client";
 import { api } from "@/lib/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Lock } from "lucide-react";
+import { Eye, EyeOff, Lock, Shield } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { zChangePasswordSchema } from "@karakeep/shared/types/users";
 
+import { Alert, AlertDescription } from "../ui/alert";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
@@ -29,6 +30,8 @@ export function ChangePassword() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const { data: userInfo } = api.users.whoami.useQuery();
   const form = useForm<z.infer<typeof zChangePasswordSchema>>({
     resolver: zodResolver(zChangePasswordSchema),
     defaultValues: {
@@ -71,108 +74,33 @@ export function ChangePassword() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="currentPassword"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel
-                    htmlFor="current-password"
-                    className="text-sm font-medium"
-                  >
-                    {t("settings.info.current_password")}
-                  </FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Input
-                        id="current-password"
-                        type={showCurrentPassword ? "text" : "password"}
-                        placeholder={t("settings.info.current_password")}
-                        className="h-11 pr-10"
-                        {...field}
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() =>
-                        setShowCurrentPassword(!showCurrentPassword)
-                      }
-                    >
-                      {showCurrentPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid gap-4 md:grid-cols-2">
+        {userInfo?.localUser === false ? (
+          <Alert>
+            <Shield className="h-4 w-4" />
+            <AlertDescription>
+              Password changes are not available for OAuth users. You are currently signed in with an external provider.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="newPassword"
+                name="currentPassword"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel
-                      htmlFor="new-password"
+                      htmlFor="current-password"
                       className="text-sm font-medium"
                     >
-                      {t("settings.info.new_password")}
+                      {t("settings.info.current_password")}
                     </FormLabel>
                     <div className="relative">
                       <FormControl>
                         <Input
-                          id="new-password"
-                          type={showNewPassword ? "text" : "password"}
-                          placeholder={t("settings.info.new_password")}
-                          className="h-11 pr-10"
-                          {...field}
-                        />
-                      </FormControl>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                      >
-                        {showNewPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="newPasswordConfirm"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel
-                      htmlFor="confirm-password"
-                      className="text-sm font-medium"
-                    >
-                      {t("settings.info.confirm_new_password")}
-                    </FormLabel>
-                    <div className="relative">
-                      <FormControl>
-                        <Input
-                          id="confirm-password"
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder={t("settings.info.confirm_new_password")}
+                          id="current-password"
+                          type={showCurrentPassword ? "text" : "password"}
+                          placeholder={t("settings.info.current_password")}
                           className="h-11 pr-10"
                           {...field}
                         />
@@ -183,10 +111,10 @@ export function ChangePassword() {
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                         onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
+                          setShowCurrentPassword(!showCurrentPassword)
                         }
                       >
-                        {showConfirmPassword ? (
+                        {showCurrentPassword ? (
                           <EyeOff className="h-4 w-4" />
                         ) : (
                           <Eye className="h-4 w-4" />
@@ -197,15 +125,99 @@ export function ChangePassword() {
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="flex justify-end">
-              <ActionButton type="submit" loading={mutator.isPending}>
-                {t("actions.save")}
-              </ActionButton>
-            </div>
-          </form>
-        </Form>
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel
+                        htmlFor="new-password"
+                        className="text-sm font-medium"
+                      >
+                        {t("settings.info.new_password")}
+                      </FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            id="new-password"
+                            type={showNewPassword ? "text" : "password"}
+                            placeholder={t("settings.info.new_password")}
+                            className="h-11 pr-10"
+                            {...field}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                        >
+                          {showNewPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="newPasswordConfirm"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel
+                        htmlFor="confirm-password"
+                        className="text-sm font-medium"
+                      >
+                        {t("settings.info.confirm_new_password")}
+                      </FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            id="confirm-password"
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder={t("settings.info.confirm_new_password")}
+                            className="h-11 pr-10"
+                            {...field}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <ActionButton type="submit" loading={mutator.isPending}>
+                  {t("actions.save")}
+                </ActionButton>
+              </div>
+            </form>
+          </Form>
+        )}
       </CardContent>
     </Card>
   );
